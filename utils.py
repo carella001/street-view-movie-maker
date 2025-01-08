@@ -4,7 +4,7 @@ from __future__ import print_function
 # https://developers.google.com/maps/documentation/roads/snap
 
 import googlemaps
-import urllib, os
+import urllib.request, os
 import numpy as np
 import json
 import pandas as pd
@@ -12,40 +12,84 @@ import polyline
 import glob
 import subprocess
 import math
+import pdb
 PHOTO_FOLDER = "./photos/"
 
 # Adapted directly from Andrew Wheeler:
 # https://andrewpwheeler.wordpress.com/2015/12/28/using-python-to-grab-google-street-view-imagery/
 # Usage example:
 # >>> download_streetview_image((46.414382,10.012988))
-def download_streetview_image(apikey_streetview, lat_lon, filename="image", savepath=PHOTO_FOLDER, picsize="600x300", heading=151.78, pitch=-0, fi=".jpg", fov=90, get_metadata=False, verbose=True, outdoor=True, radius=5):
-	assert type(radius) is int
-	# Any size up to 640x640 is permitted by the API
-	# fov is the zoom level, effectively. Between 0 and 120.
-	base = "https://maps.googleapis.com/maps/api/streetview"
-	if get_metadata:
-		base = base + "/metadata?parameters"
-	if type(lat_lon) is tuple:
-		lat_lon_str = str(lat_lon[0]) + "," + str(lat_lon[1])
-	elif type(lat_lon) is str:
-		# We expect a latitude/longitude tuple, but if you providing a string address works too.
-		lat_lon_str = lat_lon
-	if outdoor:
-		outdoor_string = "&source=outdoor"
-	else:
-		outdoor_string = ""
-	url = base + "?size=" + picsize + "&location=" + lat_lon_str + "&heading=" + str(heading) + "&pitch=" + str(pitch) + "&fov=" + str(fov) + outdoor_string + "&radius" + str(radius) + "&key=" + apikey_streetview
-	if verbose:
-		print(url)
-	if get_metadata:
-		# Description of metadata API: https://developers.google.com/maps/documentation/streetview/intro#size
-		response = urllib.urlopen(url)
-		data = json.loads(response.read())
-		return data
-	else:
-		urllib.urlretrieve(url, savepath+filename+fi)
-		return savepath+filename+fi
-
+# def download_streetview_image(apikey_streetview, lat_lon, filename="image", savepath=PHOTO_FOLDER, picsize="600x300", heading=151.78, pitch=-0, fi=".jpg", fov=90, get_metadata=False, verbose=True, outdoor=True, radius=5):
+	# assert type(radius) is int
+    #Any size up to 640x640 is permitted by the API
+    #fov is the zoom level, effectively. Between 0 and 120.
+    # base = "https://maps.googleapis.com/maps/api/streetview"
+    # if get_metadata: 
+        # base = base + "/metadata?parameters"
+    # if type(lat_lon) is tuple:
+        # lat_lon_str = str(lat_lon[0]) + "," + str(lat_lon[1])
+    # elif type(lat_lon) is str:
+        #We expect a latitude/longitude tuple, but if you providing a string address works too.
+        # lat_lon_str = lat_lon
+    # if outdoor:
+        # outdoor_string = "&source=outdoor"
+    # else:
+        # outdoor_string = ""
+    # url = base + "?size=" + picsize + "&location=" + lat_lon_str + "&heading=" + str(heading) + "&pitch=" + str(pitch) + "&fov=" + str(fov) + outdoor_string + "&radius" + str(radius) + "&key=" + apikey_streetview
+    # if verbose:
+        # print(url)
+            # if get_metadata:
+        #Description of metadata API: https://developers.google.com/maps/documentation/streetview/intro#size
+        # response = urllib.request.urlopen(url)
+        # data = json.loads(response.read())
+        # return data
+    # else:
+        # urllib.urlretrieve(url, savepath+filename+fi)
+        # return savepath+filename+fi
+        # ---------------------------remplacée
+# def download_streetview_image(apikey_streetview, gps_point, filename="", heading=0, picsize="640x320", get_metadata=False):
+    # if get_metadata:
+        # metadata_url = f"https://maps.googleapis.com/maps/api/streetview/metadata?size={picsize}&location={gps_point[0]},{gps_point[1]}&heading={heading}&key={apikey_streetview}"
+        # print("Generated metadata URL:", metadata_url)
+        # metadata_response = urllib.request.urlopen(metadata_url)
+        # metadata = json.loads(metadata_response.read())
+        # print("Metadata response:", metadata)
+        # return metadata
+    # else:
+        # url = f"https://maps.googleapis.com/maps/api/streetview?size={picsize}&location={gps_point[0]},{gps_point[1]}&heading={heading}&key={apikey_streetview}"
+        # print("Generated URL:", url)
+        # response = urllib.request.urlopen(url)
+        # print("Response status:", response.status)
+        # print("Response headers:", response.headers)
+        # with open(filename, "wb") as f:
+            # f.write(response.read())
+        # print(f"Image saved as {filename}")
+        # return filename
+def download_streetview_image(apikey_streetview, gps_point, filename="", heading=0, picsize="640x320", get_metadata=False):
+    if get_metadata:
+        metadata_url = f"https://maps.googleapis.com/maps/api/streetview/metadata?size={picsize}&location={gps_point[0]},{gps_point[1]}&heading={heading}&key={apikey_streetview}"
+        print("Generated metadata URL:", metadata_url)
+        metadata_response = urllib.request.urlopen(metadata_url)
+        metadata = json.loads(metadata_response.read())
+        print("Metadata response:", metadata)
+        return metadata
+    else:
+        url = f"https://maps.googleapis.com/maps/api/streetview?size={picsize}&location={gps_point[0]},{gps_point[1]}&heading={heading}&key={apikey_streetview}"
+        print("Generated URL:", url)
+        response = urllib.request.urlopen(url)
+        print("Response status:", response.status)
+        print("Response headers:", response.headers)
+        
+        # Assurez-vous que le répertoire existe
+        output_dir = "lineup-joshua_tree"
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Enregistrez l'image dans le répertoire lineup-joshua_tree
+        filepath = os.path.join(output_dir, filename)
+        with open(filepath, "wb") as f:
+            f.write(response.read())
+        print(f"Image saved as {filepath}")
+        return filepath
 # Gist copied from https://gist.github.com/jeromer/2005586 which is in the public domain:
 def calculate_initial_compass_bearing(pointA, pointB):
 	if (type(pointA) != tuple) or (type(pointB) != tuple):
@@ -83,7 +127,7 @@ def haversine(a_gps, b_gps):
 def interpolate_points(a_gps,b_gps,n_points=10,hop_size=None):
 	if hop_size is not None:
 		distance = haversine(a_gps, b_gps)
-		n_points = np.ceil(distance*1.0/hop_size)
+		n_points = int(np.ceil(distance*1.0/hop_size))
 	x = np.linspace(a_gps[0],b_gps[0],n_points)
 	y = np.linspace(a_gps[1],b_gps[1],n_points)
 	dense_points_list = zip(x,y)
@@ -105,19 +149,34 @@ def clean_look_points(look_points):
 # The orientation is assumed to be towards the next point.
 # Setting orientation to value N orients the camera to the Nth next point.
 # If there isn't a point N points in the future, we just use the previous heading.
+# def download_images_for_path(apikey_streetview, filestem, look_points, orientation=1, picsize="640x320"):
+	# assert type(orientation) is int
+	# assert orientation >= 1
+	# for i in range(len(look_points)):
+		# gps_point = look_points[i]
+		# if i+orientation >= len(look_points):
+			# heading = prev_heading
+		# else:
+			# heading = calculate_initial_compass_bearing(gps_point, look_points[i+orientation])
+		# probe = download_streetview_image(apikey_streetview, gps_point, filename="", heading=heading, picsize=picsize, get_metadata=True)
+		# if probe['status']=="OK" and 'Google' in probe['copyright']:
+			# dest_file = download_streetview_image(apikey_streetview, gps_point, filename=filestem + str(i), heading=heading, picsize=picsize, get_metadata=False)
+		# prev_heading = heading --------------------------------------remplacée
+        
 def download_images_for_path(apikey_streetview, filestem, look_points, orientation=1, picsize="640x320"):
-	assert type(orientation) is int
-	assert orientation >= 1
-	for i in range(len(look_points)):
-		gps_point = look_points[i]
-		if i+orientation >= len(look_points):
-			heading = prev_heading
-		else:
-			heading = calculate_initial_compass_bearing(gps_point, look_points[i+orientation])
-		probe = download_streetview_image(apikey_streetview, gps_point, filename="", heading=heading, picsize=picsize, get_metadata=True)
-		if probe['status']=="OK" and 'Google' in probe['copyright']:
-			dest_file = download_streetview_image(apikey_streetview, gps_point, filename=filestem + str(i), heading=heading, picsize=picsize, get_metadata=False)
-		prev_heading = heading
+    assert type(orientation) is int
+    assert orientation >= 1
+    prev_heading = 0
+    for i in range(len(look_points)):
+        gps_point = look_points[i]
+        if i + orientation >= len(look_points):
+            heading = prev_heading
+        else:
+            heading = calculate_initial_compass_bearing(gps_point, look_points[i + orientation])
+        probe = download_streetview_image(apikey_streetview, gps_point, filename="", heading=heading, picsize=picsize, get_metadata=True)
+        if probe['status'] == "OK" and 'Google' in probe['copyright']:
+            dest_file = download_streetview_image(apikey_streetview, gps_point, filename=f"{filestem}_{i}.jpg", heading=heading, picsize=picsize, get_metadata=False)
+        prev_heading = heading
 
 def get_turn_headings(h1, h2, stepsize=15):
 	if h2 < h1:
@@ -267,25 +326,26 @@ def assemble_grid_of_images(filestem, savepath, outfilestem, grid_dim, crop_dim=
 # Also, some images will be duplicates, and we can remove them.
 # Also, a user may want to manually discard images because they are clearly out of step with the path (e.g., they might be view inside a building, or slightly down a cross-street.) After manually removing files, re-running this will line up the files.
 def line_up_files(filestem, new_dir="./movie_lineup", command="mv", override_nums=None):
-	if not os.path.exists(new_dir):
-		os.makedirs(new_dir)
-	files = glob.glob("./photos/"+filestem+"*.jpg")
-	file_nums = [int(filename[9+len(filestem):-4]) for filename in files]
-	file_sort = [files[i] for i in np.argsort(file_nums)]
-	# First, remove file_nums that represent duplicate files
-	file_keepers = prune_repeated_images_from_list(file_sort)
+    if not os.path.exists(new_dir):
+        os.makedirs(new_dir)
+    files = glob.glob("./photos/"+filestem+"*.jpg")
+    file_nums = [int(filename[9+len(filestem):-4]) for filename in files]
+    file_sort = [files[i] for i in np.argsort(file_nums)]
+    # pdb.set_trace()
+    # First, remove file_nums that represent duplicate f iles
+    file_keepers = prune_repeated_images_from_list(file_sort)
     # for i in range(1,len(file_sort)):
     #     prev_file = file_keepers[-1]
     #     curr_file = file_sort[i]
     #     result = os.system("diff " + curr_file + " " + prev_file)
     #     if result > 0:
     #         file_keepers += [curr_file]
-	# Now, shuffle the files into a packed numbering:
-	for i in range(len(file_keepers)):
-		old_filename = file_keepers[i]
-		new_filename = "{0}/{1}{2}.jpg".format(new_dir,filestem,i)
-		print("{0} {1} {2}".format(command, old_filename, new_filename))
-		os.system("{0} {1} {2}".format(command, old_filename, new_filename))
+    # Now, shuffle the files into a packed numbering:
+    for i in range(len(file_keepers)):
+        old_filename = file_keepers[i]
+        new_filename = "{0}/{1}{2}.jpg".format(new_dir,filestem,i)
+        print("{0} {1} {2}".format(command, old_filename, new_filename))
+        os.system("{0} {1} {2}".format(command, old_filename, new_filename))
 
 # Refactor line_up_files as separate steps:
 def line_up_files_with_numbers_script(filestem, numbers, new_dir):
@@ -300,24 +360,41 @@ def copy_files_to_sequence(list_of_files, new_filestem, command='cp'):
 		print("{0} {1} {2}".format(command, old_filename, new_filename))
 		os.system("{0} {1} {2}".format(command, old_filename, new_filename))
 
+# def prune_repeated_images_from_list(list_of_files):
+    # file_keepers = [list_of_files[0]]
+    # for i in range(1,len(list_of_files)):
+    	# prev_file = file_keepers[-1]
+    	# curr_file = list_of_files[i]
+    	# result = os.system("diff " + curr_file + " " + prev_file)
+    	# if result > 0:
+            # file_keepers += [curr_file]
+    # return file_keepers
+    
 def prune_repeated_images_from_list(list_of_files):
+    if not list_of_files:
+        print("La liste des fichiers est vide.")
+        return []
+
     file_keepers = [list_of_files[0]]
-    for i in range(1,len(list_of_files)):
-    	prev_file = file_keepers[-1]
-    	curr_file = list_of_files[i]
-    	result = os.system("diff " + curr_file + " " + prev_file)
-    	if result > 0:
-            file_keepers += [curr_file]
+    for file in list_of_files[1:]:
+        if not are_images_identical(file_keepers[-1], file):
+            file_keepers.append(file)
     return file_keepers
 
-def make_video(base_string, rate=20, video_string=None, picsize="640x640", basepath="./photos"):
-	if video_string is None:
-		video_string = base_string
-	subprocess.call("ffmpeg -r {0} -f image2 -s {3} -i {4}/{1}%d.jpg -vcodec libx264 -crf 25 -pix_fmt yuv420p {2}.mp4 -y".format(rate, base_string, video_string, picsize, basepath), shell=True)
+# def make_video(base_string, rate=20, video_string=None, picsize="640x640", basepath="./photos"):
+    # pdb.set_trace()
+    # if video_string is None:
+        # video_string = base_string
+    # subprocess.call("ffmpeg -r {0} -f image2 -s {3} -i {4}/{1}%d.jpg -vcodec libx264 -crf 25 -pix_fmt yuv420p {2}.mp4 -y".format(rate, base_string, video_string, picsize, basepath), shell=True)
 
 
 
-
+def make_video(base_string, rate=20, video_string=None, picsize="640x640", basepath="./lineup-joshua_tree"):
+    # pdb.set_trace()
+    if video_string is None:
+        video_string = base_string
+    # subprocess.call("ffmpeg -r {0} -f image2 -s {3} -i {4}/{1}%d.jpg -vcodec libx264 -crf 25 -pix_fmt yuv420p {2}.mp4 -y".format(rate, base_string, video_string, picsize, basepath), shell=True)
+    subprocess.call("ffmpeg -i ./lineup-joshua_tree/joshua_tree_%d.jpg -c:v libx264 output.mp4")
 
 
 
